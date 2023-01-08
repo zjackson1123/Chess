@@ -1,94 +1,162 @@
-import chessboard as cb
-
 class ChessPieces():
     class ChessPiece():
         def __init__(self, name, img, color, index):
             self.name = name
             self.img = img
             self.color = color
-            self.index = index
-            self.hashPiece()
+            self.index = index 
+            self.checkCheck = False
+            self.inVision = {}
 
-        def hashPiece(self):
-            cb.ChessBoard.pieceArr.append(self)
-
-        def showMoves(self, board):
-            return cb.ChessBoard.board[self.index]
+        def showMove(self, board, squaresToMove, moveBy, checkCheck = False):
+            index = self.index
+            for i in range(squaresToMove):
+                index = tuple(map(lambda a,b: a+b, index, moveBy))
+                if(board.checkValidMove(index, self)):
+                    if(checkCheck):
+                        board.inCheck()
+                    else:
+                        board.board[self.index].shownmoves.append(board.drawMove(index))
+                else:
+                    break
 
     class Pawn(ChessPiece):
-        def __init__(self, name, img, color, index):
+        def __init__(self, name, img, color, index, firstmove = True):
             super().__init__(name, img, color, index)
-            self.firstMove = True
+            self.firstMove = firstmove
             self.canEnPassant = False
 
         def showMoves(self, board):
-            currentPos = super().showMoves(board)
-            currentPos.shownmoves.append(board.drawDot( self.index+1, self))
-            if self.firstMove:
-                currentPos.shownmoves.append(board.drawDot(self.index+2, self))
+            if(board.turn != self.color):
+                return
+            if self.color == "bk":
+                if not self.firstMove:
+                    self.showMove(board, 1, (0,1))
+                else:
+                    self.showMove(board, 2, (0,1))
+            else:
+                if not self.firstMove:
+                    self.showMove(board, 1, (0,-1))
+                else:
+                    self.showMove(board, 2, (0,-1))
+
+            board.potentialMove = True
+            
+        
+        def pawnAttack(self, board, checkCheck = False):
+            if(board.turn != self.color):
+                return
+
+            self.checkCheck = checkCheck
+            index = self.index
+            Rdiag = None
+            Ldiag = None
+            if self.color == "bk":
+                index = tuple(map(lambda a,b: a+b, index, (1,1)))
+                Rdiag = board.board[index]
+                index = tuple(map(lambda a,b: a+b, index, (-2,0)))
+                Ldiag = board.board[index]
+            else:
+                index = tuple(map(lambda a,b: a+b, index, (1,-1)))
+                Rdiag = board.board[index]
+                index = tuple(map(lambda a,b: a+b, index, (-2,0)))
+                Ldiag = board.board[index]
+                
+
+            if Rdiag.piece is not None and Rdiag.piece.color != self.color:
+                x,y = board.pieceCoordinates(Rdiag)
+                board.board[self.index].shownmoves.append(board.canvas.create_oval(x-35, y-35, x+35, y+35, fill='', outline="black", width=8))
+                Rdiag.canMoveHere = True
+            
+            if Ldiag.piece is not None and Ldiag.piece.color != self.color  :
+                x,y = board.pieceCoordinates(Ldiag)
+                board.board[self.index].shownmoves.append(board.canvas.create_oval(x-35, y-35, x+35, y+35, fill='', outline="black", width=8))
+                Ldiag.canMoveHere = True
+            
 
     class Bishop(ChessPiece):
         def __init__(self, name, img, color, index):
             super().__init__(name, img, color, index)
 
-        def showMoves(self, board):
-            currentPos = super().showMoves(board)
-            for i in range(8):
-                currentPos.shownmoves.append(board.drawDot(self.index+(i*8)+9))
-                currentPos.shownmoves.append(board.drawDot(self.index+(i*8)-7))
-                currentPos.shownmoves.append(board.drawDot(self.index+(i*8)-9))
-                currentPos.shownmoves.append(board.drawDot(self.index+(i*8)+7))
+        def showMoves(self, board, checkCheck = False):
+            if(board.turn != self.color):
+                return
+
+            self.checkCheck = checkCheck
+            self.showMove(board, 8, (1,1))
+            self.showMove(board, 8, (-1,1))
+            self.showMove(board, 8, (-1,-1))
+            self.showMove(board, 8, (1,-1))
+            board.potentialMove = True
 
     class Rook(ChessPiece):
         def __init__(self, name, img, color, index):
             super().__init__(name, img, color, index)
         
-        def showMoves(self):
-            currentPos = super().showMoves()
-            for i in range(8):
-                currentPos.shownmoves.append(cb.ChessBoard.drawDot(self.index+(i*8)))
-                currentPos.shownmoves.append(cb.ChessBoard.drawDot(self.index+i))
+        def showMoves(self, board, checkCheck = False):
+            if(board.turn != self.color):
+                return
+
+            self.checkCheck = checkCheck
+            self.showMove(board, 8, (0,1))
+            self.showMove(board, 8, (1,0))
+            self.showMove(board, 8, (0,-1))
+            self.showMove(board, 8, (-1,0))
+            board.potentialMove = True
 
     class Knight(ChessPiece):
         def __init__(self, name, img, color, index):
             super().__init__(name, img, color, index)
 
-        def showMoves(self):
-            currentPos = super().showMoves()
-            currentPos.shownmoves.append(cb.ChessBoard.drawDot(self.index+17))
-            currentPos.shownmoves.append(cb.ChessBoard.drawDot(self.index-15))
-            currentPos.shownmoves.append(cb.ChessBoard.drawDot(self.index+10))
-            currentPos.shownmoves.append(cb.ChessBoard.drawDot(self.index-6))
-            currentPos.shownmoves.append(cb.ChessBoard.drawDot(self.index+15))
-            currentPos.shownmoves.append(cb.ChessBoard.drawDot(self.index-17))
-            currentPos.shownmoves.append(cb.ChessBoard.drawDot(self.index+6))
-            currentPos.shownmoves.append(cb.ChessBoard.drawDot(self.index-10))
+        def showMoves(self, board, checkCheck = False):
+            if(board.turn != self.color):
+                return
+
+            self.checkCheck = checkCheck
+            self.showMove(board, 1, (2,1))
+            self.showMove(board, 1, (2,-1))
+            self.showMove(board, 1, (-2,1))
+            self.showMove(board, 1, (-2,-1))
+            self.showMove(board, 1, (1,2))
+            self.showMove(board, 1, (1,-2))
+            self.showMove(board, 1, (-1,-2))
+            self.showMove(board, 1, (-1,2))
+            board.potentialMove = True
 
     class Queen(ChessPiece):
         def __init__(self, name, img, color, index):
             super().__init__(name, img, color, index)
 
-        def showMoves(self):
-            currentPos = super().showMoves()
-            for i in range(8):
-                currentPos.shownmoves.append(cb.ChessBoard.drawDot(self.index+(i*8)+9))
-                currentPos.shownmoves.append(cb.ChessBoard.drawDot(self.index+(i*8)-7))
-                currentPos.shownmoves.append(cb.ChessBoard.drawDot(self.index+(i*8)-9))
-                currentPos.shownmoves.append(cb.ChessBoard.drawDot(self.index+(i*8)+7))
-                currentPos.shownmoves.append(cb.ChessBoard.drawDot(self.index+(i*8)))
-                currentPos.shownmoves.append(cb.ChessBoard.drawDot(self.index+i))
+        def showMoves(self, board, checkCheck = False):
+            if(board.turn != self.color):
+                return
+
+            self.checkCheck = checkCheck
+            self.showMove(board, 8, (1,1))
+            self.showMove(board, 8, (1,-1))
+            self.showMove(board, 8, (-1,1))
+            self.showMove(board, 8, (-1,-1))
+            self.showMove(board, 8, (0,1))
+            self.showMove(board, 8, (1,0))
+            self.showMove(board, 8, (0,-1))
+            self.showMove(board, 8, (-1,0))
+            board.potentialMove = True
 
     class King(ChessPiece):
         def __init__(self, name, img, color, index):
             super().__init__(name, img, color, index)
 
-        def showMoves(self):
-            currentPos, piece = super().showMoves()
-            currentPos.shownmoves.append(cb.ChessBoard.drawDot(self.index+1, piece))
-            currentPos.shownmoves.append(cb.ChessBoard.drawDot(self.index-1, piece))
-            currentPos.shownmoves.append(cb.ChessBoard.drawDot(self.index-8, piece))
-            currentPos.shownmoves.append(cb.ChessBoard.drawDot(self.index-8, piece))
-            currentPos.shownmoves.append(cb.ChessBoard.drawDot(self.index+9, piece))
-            currentPos.shownmoves.append(cb.ChessBoard.drawDot(self.index-7, piece))
-            currentPos.shownmoves.append(cb.ChessBoard.drawDot(self.index-9, piece))
-            currentPos.shownmoves.append(cb.ChessBoard.drawDot(self.index+7, piece))
+        def showMoves(self, board, checkCheck = False):
+            if(board.turn != self.color):
+                return
+
+            self.checkCheck = checkCheck
+            self.showMove(board, 1, (1,1))
+            self.showMove(board, 1, (1,-1))
+            self.showMove(board, 1, (-1,1))
+            self.showMove(board, 1, (-1,-1))
+            self.showMove(board, 1, (0,1))
+            self.showMove(board, 1, (1,0))
+            self.showMove(board, 1, (0,-1))
+            self.showMove(board, 1, (-1,0))
+            board.potentialMove = True
