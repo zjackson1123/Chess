@@ -16,6 +16,7 @@ class ChessBoard():
             self.canMoveHere = False
             self.piece = None
             self.shownmoves = []
+            self.inVision = []
 
         def clearMoves(self):
             for (x,y) in self.board.keys():
@@ -114,7 +115,7 @@ class ChessBoard():
 
     def drawMove(self, i):
         moveToDraw = self.board[i]
-        if(moveToDraw.x0 >= 80 and moveToDraw.y0 >= 220 and moveToDraw.x1 <= 860 and moveToDraw.y1 <= 720):
+        if(moveToDraw.x0 >= 220 and moveToDraw.y0 >= 80 and moveToDraw.x1 <= 860 and moveToDraw.y1 <= 720):
             x,y = self.pieceCoordinates(moveToDraw)
             drawnMove = self.canvas.create_oval(x-10, y-10, x+10, y+10, fill="black")
             moveToDraw.canMoveHere = True
@@ -123,11 +124,15 @@ class ChessBoard():
     def drawAttack(self, atkToDraw):
         x,y = self.pieceCoordinates(atkToDraw)
         drawnAtk = self.canvas.create_oval(x-35, y-35, x+35, y+35, fill='', outline="black", width=8)
+        atkToDraw.canMoveHere = True
         return drawnAtk
 
     def checkValidMove(self, index, piece):
         if index[0] < 0 or index[0] > 7 or index[1] < 0 or index[1] > 7:
             return False
+
+        if piece.name == "pawn":
+            self.diagAtk(piece)
 
         boardSpace = self.board[index]
         if boardSpace.piece is not None:
@@ -135,17 +140,34 @@ class ChessBoard():
             if boardSpace.piece.color == piece.color:
                 return False
 
-            boardSpace.canMoveHere = True
-            if piece.color != boardSpace.piece.color:
-                if piece.name == "pawn":
-                    boardSpace.canMoveHere = False
-                    piece.pawnAttack(self)
-                else:
-                    self.board[piece.index].shownmoves.append(self.drawAttack(boardSpace))           
+            if piece.name != "pawn" and piece.color != boardSpace.piece.color:
+                self.board[piece.index].shownmoves.append(self.drawAttack(boardSpace))              
                 return False
+
         else:    
             return True
   
+
+    def diagAtk(self, piece):
+        if(piece.color == "bk"):
+            Rindex = tuple(map(lambda a,b: a+b, piece.index, (1,1)))
+            Lindex = tuple(map(lambda a,b: a+b, piece.index, (-1,1)))
+        else:
+            Rindex = tuple(map(lambda a,b: a+b, piece.index, (1,-1)))
+            Lindex = tuple(map(lambda a,b: a+b, piece.index, (-1,-1)))
+        
+        if Rindex[0] < 0 or Rindex[0] > 7 or Rindex[1] < 0 or Rindex[1] > 7 or Lindex[0] < 0 or Lindex[0] > 7 or Lindex[1] < 0 or Lindex[1] > 7:
+            return
+        
+        Rspace = self.board[Rindex]
+        Lspace = self.board[Lindex]
+
+        if(Rspace.piece is not None and Rspace.piece.color != piece.color):
+            self.board[piece.index].shownmoves.append(self.drawAttack(Rspace))
+
+        if(Lspace.piece is not None and Lspace.piece.color != piece.color):
+            self.board[piece.index].shownmoves.append(self.drawAttack(Lspace))
+
 
     def pieceCoordinates(self, boardSpace):
         if(boardSpace != None):
@@ -183,17 +205,12 @@ class ChessBoard():
             self.pieceToMove.firstMove = False
         self.addChessPiece(self.pieceToMove.color + "-" + self.pieceToMove.name, index, False)
         self.canvas.delete(self.pieceToMove.img)
+        self.pieceToMove.showMoves(self, True)
         self.potentialMove = False
         self.BoardSpace.clearMoves(self)
-        self.checkPotentialCheck()
+        #self.checkPotentialCheck()
         self.board[self.pieceToMove.index].piece = None
         self.turnChange()
-
-
-    def checkPotentialCheck(self):
-        self.pieceToMove.showMoves(self)
-
-    #def inCheck(self, color):
 
     def turnChange(self):
         if(self.turn == "wh"):
