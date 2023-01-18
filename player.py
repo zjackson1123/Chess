@@ -7,10 +7,13 @@ class Player:
         self.checked = False
     
     def assignPiece(self, piece):
-        self.pieces[piece.name + "-" + piece.id] = piece
+        self.pieces[piece.fullname] = piece
+
+    def getPiece(self, name):
+        return self.pieces[self.color + "-" + name]
         
     def handleCheck(self, index):
-        king = self.pieces["king-1"]
+        king = self.getPiece("king-1")
         for name in king.checkedBy.keys():
             for i in king.checkedBy[name]:
                 if index == i:

@@ -7,6 +7,7 @@ class ChessPieces():
             self.color = color
             self.index = index
             self.fullname = color + "-" + name + "-" + str(id)
+            self.onBoard = True
             self.inVision = {}
             self.moveBy = 0
             self.moveRules = []
@@ -25,6 +26,8 @@ class ChessPieces():
                     board.potentialMove = True
                         
         def setVision(self, board):
+            if not self.onBoard:
+                return
             i = 0
             for moveRule in self.moveRules:
                 index = self.index
@@ -95,9 +98,7 @@ class ChessPieces():
                         indices.append(index)
                     self.addVision(board, indices, i)
                     i += 1                      
-                    
-            
-            
+                           
     class Bishop(ChessPiece):
         def __init__(self, name, img, color, index, id):
             super().__init__(name, img, color, index, id)
@@ -131,10 +132,12 @@ class ChessPieces():
             self.checkedBy = {}
             
         def checked(self, indices, atkPiece, board):             
-            self.canCheck[atkPiece.fullname] = []
-            for index in indices:
-                self.canCheck[atkPiece.fullname].append(index)
-                
+            self.canCheck[atkPiece.fullname] = indices
+            self.checkedBy[atkPiece.fullname] = []
+            #kingSquare = board.board[board.notTurn.pieces["king-1"].index]
+            #if kingSquare.drawnCheck is not None:
+                #board.canvas.delete(kingSquare.drawnCheck)
+
             for index in self.canCheck[atkPiece.fullname]:
                 piece = board.board[index].piece
                 if piece is not None:
@@ -142,10 +145,8 @@ class ChessPieces():
                         self.checkedBy[atkPiece.fullname] = indices
                         self.checkedBy[atkPiece.fullname].append(atkPiece.index)  
                         board.board[index].drawSquare(board, "red")   
-                        if piece.color == "wh":
-                            board.p1.checked = True
-                        else:
-                            board.p2.checked = True
+                        board.check(piece.color)
+                        #board.notTurn.checked = True
                     else:
                         break
                 

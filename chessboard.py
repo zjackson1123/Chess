@@ -17,6 +17,7 @@ class ChessBoard():
             self.canMoveHere = False
             self.piece = None
             self.shownmoves = []
+            self.drawnCheck = None
 
         def clearMoves(self):
             for (x,y) in self.board.keys():
@@ -26,11 +27,8 @@ class ChessBoard():
             self.potentialMove = False
             
         def drawSquare(self, board, color):
-            square = board.canvas.create_rectangle(self.x0, self.y0, self.x1, self.y1, fill=color)
-            board.canvas.tag_lower(square, self.piece.img)
-            
-            
-            
+            self.drawnCheck = board.canvas.create_rectangle(self.x0, self.y0, self.x1, self.y1, fill=color)
+            board.canvas.tag_lower(self.drawnCheck, self.piece.img)
 
     def __init__(self, root):
         self.root = root
@@ -43,6 +41,7 @@ class ChessBoard():
         self.p1 = player.Player("wh")
         self.p2 = player.Player("bk")
         self.turn = self.p1
+        self.notTurn = self.p2
         self.Checked = False
         frame = Frame(self.root)
         frame.grid(row=0, column=0, sticky="n")
@@ -188,6 +187,7 @@ class ChessBoard():
     def makeMove(self, index):
         boardspace = self.board[index]
         if boardspace.piece is not None:
+            boardspace.piece.onBoard = False
             self.canvas.delete(boardspace.piece.img)
         self.updatePiece(index)
         self.pieceToMove.setVision(self)
@@ -204,7 +204,25 @@ class ChessBoard():
         self.board[index].piece = self.pieceToMove
 
     def turnChange(self):
-        if(self.turn == self.p1):
-            self.turn = self.p2
+        if self.playerStillChecked():
+            return
+        temp = self.turn
+        self.turn = self.notTurn
+        self.notTurn = temp
+
+    def playerStillChecked(self):
+        if self.turn.checked:
+            self.turn.checked = False
+            king = self.turn.getPiece("king-1")
+            self.canvas.delete(self.board[king.index].drawnCheck)
+            for pieceName in king.checkedBy.keys():
+                self.notTurn.pieces[pieceName].setVision(self)
+                #king.checked(king.checkedBy[pieceName], self.notTurn.pieces[pieceName], self)
+        return self.turn.checked
+    
+    def check(self, color):
+        if color == "wh":
+            self.p1.checked = True
         else:
-            self.turn = self.p1
+            self.p2.checked = True
+
