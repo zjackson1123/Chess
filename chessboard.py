@@ -17,7 +17,6 @@ class ChessBoard():
             self.canMoveHere = False
             self.piece = None
             self.shownmoves = []
-            self.drawnCheck = None
 
         def clearMoves(self):
             for (x,y) in self.board.keys():
@@ -27,8 +26,8 @@ class ChessBoard():
             self.potentialMove = False
             
         def drawSquare(self, board, color):
-            self.drawnCheck = board.canvas.create_rectangle(self.x0, self.y0, self.x1, self.y1, fill=color)
-            board.canvas.tag_lower(self.drawnCheck, self.piece.img)
+            board.notTurn.drawnCheck = board.canvas.create_rectangle(self.x0, self.y0, self.x1, self.y1, fill=color)
+            board.canvas.tag_lower(board.notTurn.drawnCheck, self.piece.img)
 
     def __init__(self, root):
         self.root = root
@@ -214,10 +213,9 @@ class ChessBoard():
         if self.turn.checked:
             self.turn.checked = False
             king = self.turn.getPiece("king-1")
-            self.canvas.delete(self.board[king.index].drawnCheck)
+            self.canvas.delete(self.turn.drawnCheck)
             for pieceName in king.checkedBy.keys():
                 self.notTurn.pieces[pieceName].setVision(self)
-                #king.checked(king.checkedBy[pieceName], self.notTurn.pieces[pieceName], self)
         return self.turn.checked
     
     def check(self, color):

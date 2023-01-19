@@ -17,13 +17,14 @@ class ChessPieces():
                 return              
             for dictIndex in self.inVision.keys():
                 for index in self.inVision[dictIndex]:
-                    if board.turn.checked and not board.turn.handleCheck(index):
+                    if board.turn.checked and not board.turn.handleCheck(self, index, board):
                         break
                     if board.board[index].piece is not None:
                         board.drawAttack(index, self.index)
                         break
-                    board.drawMove(index, self.index)
+                    board.drawMove(index, self.index)    
                     board.potentialMove = True
+                    
                         
         def setVision(self, board):
             if not self.onBoard:
@@ -68,13 +69,13 @@ class ChessPieces():
             for dictIndex in self.inVision.keys():
                 for index in self.inVision[dictIndex]:
                     if dictIndex < 1:   
-                        if board.turn.checked and not board.turn.handleCheck(index):
+                        if board.turn.checked and not board.turn.handleCheck(self, index, board):
                             break
                         if board.board[index].piece is not None:
                             break
                         board.drawMove(index, self.index)
                     else:
-                        if board.turn.checked and not board.turn.handleCheck(index):
+                        if board.turn.checked and not board.turn.handleCheck(self, index, board):
                             break
                         if board.board[index].piece is not None: 
                             board.drawAttack(index, self.index)
@@ -131,12 +132,22 @@ class ChessPieces():
             self.canCheck = {}
             self.checkedBy = {}
             
+        def showMoves(self, board):
+            if board.turn.color != self.color:
+                return              
+            for dictIndex in self.inVision.keys():
+                for index in self.inVision[dictIndex]:
+                    if board.turn.checked and not board.turn.handleCheck(self, index, board):
+                        break
+                    if board.board[index].piece is not None:
+                        board.drawAttack(index, self.index)
+                        break
+                    board.drawMove(index, self.index)    
+                    board.potentialMove = True
+            
         def checked(self, indices, atkPiece, board):             
             self.canCheck[atkPiece.fullname] = indices
             self.checkedBy[atkPiece.fullname] = []
-            #kingSquare = board.board[board.notTurn.pieces["king-1"].index]
-            #if kingSquare.drawnCheck is not None:
-                #board.canvas.delete(kingSquare.drawnCheck)
 
             for index in self.canCheck[atkPiece.fullname]:
                 piece = board.board[index].piece
@@ -144,9 +155,9 @@ class ChessPieces():
                     if piece.name == "king":
                         self.checkedBy[atkPiece.fullname] = indices
                         self.checkedBy[atkPiece.fullname].append(atkPiece.index)  
+                        self.checkedBy[atkPiece.fullname].remove(piece.index)
                         board.board[index].drawSquare(board, "red")   
                         board.check(piece.color)
-                        #board.notTurn.checked = True
                     else:
                         break
                 
